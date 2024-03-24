@@ -1,0 +1,83 @@
+# Hyperparameters follow the classic Nature DQN, but we modify as necessary to
+# match those used in Rainbow (Hessel et al., 2018), to ensure apples-to-apples
+# comparison.
+import dopamine.discrete_domains.atari_lib
+import dopamine.discrete_domains.run_experiment
+import dopamine.jax.agents.dqn.dqn_agent
+import dopamine.replay_memory.circular_replay_buffer
+import ensemble_rl.run_experiment
+import dopamine.metrics.collector_dispatcher
+import ensemble_rl.agents.dqn_agent
+import ensemble_rl.agents.boot_dqn_agent
+import ensemble_rl.vectorized_buffer
+import ensemble_rl.run_experiment
+import dopamine.discrete_domains.checkpointer
+
+
+ensemble_rl.run_experiment.create_agent_custom.agent_name = 'boot_dqn'
+JaxDQNAgent.summary_writing_frequency = 125000
+JaxDQNAgent.gamma = 0.99
+JaxDQNAgent.update_horizon = 1
+JaxDQNAgent.min_replay_history = 50000  # agent steps, dqn zoo, min_replay_capacity_fraction = 0.05
+JaxDQNAgent.update_period = 4
+JaxDQNAgent.target_update_period = 30000  # agent steps, dqn zoo
+JaxDQNAgent.epsilon_train = 0.01
+JaxDQNAgent.epsilon_eval = 0.01  # dqn zoo
+JaxDQNAgent.epsilon_decay_period = 1000000  # dqn zoo
+JaxDQNAgent.loss_type = 'huber'  # dqn zoo
+# Note: We are using the Adam optimizer by default for JaxDQN, which differs
+#       from the original NatureDQN and the dopamine TensorFlow version. In
+#       the experiments we have ran, we have found that using Adam yields
+#       improved training performance.
+JaxDQNAgent.optimizer = 'rmsprop'  # dqn zoo tandem
+# We use double dqn by default
+JaxDQNCustomAgent.double_dqn = True
+JaxBootDQNAgent.ensemble_size = 10
+JaxBootDQNAgent.share_encoder = True
+JaxBootDQNAgent.share_penult = False
+JaxBootDQNAgent.aux_loss = 'none'
+JaxBootDQNAgent.tandem = False
+JaxBootDQNAgent.active_prob = None  # could be like 0.9, when tandem is true
+JaxBootDQNAgent.grad_scale = True  # Normalized gradient, bootstrapped qn
+JaxBootDQNAgent.dqn_zoo_net = True  # Use DQN Zoo network
+JaxBootDQNAgent.sep_prob = None  # could be like 0.9, when tandem is true
+JaxBootDQNAgent.sep_mode = 'own'  # could be like 0.9, when tandem is true
+JaxBootDQNAgent.single_cerl = False
+JaxBootDQNAgent.multi_gamma = False
+JaxBootDQNAgent.num_gammas = None
+JaxBootDQNAgent.cerl_own_target = False
+JaxBootDQNAgent.fnorm = False
+JaxBootDQNAgent.mico = False
+JaxBootDQNAgent.mico_weight = 0.01
+JaxBootDQNAgent.per_step = False
+JaxBootDQNAgent.boot_prob = None
+
+
+create_optimizer.learning_rate = 0.00025  # dqn zoo, tandem
+create_optimizer.beta2 = 0.95
+create_optimizer.eps = 9.765625e-06  # 0.01/ 32/ 32
+create_optimizer.centered = True  # 0.01/ 32/ 32
+
+atari_lib.create_atari_environment.game_name = 'Pong'
+# Sticky actions with probability 0.25, as suggested by (Machado et al., 2017).
+# TO be consistent with DQN Zoo
+atari_lib.create_atari_environment.sticky_actions = False
+# Well I intended to use True to be consistent with DQN Zoo but I missed this flag initially...
+# For the results in paper it is set to False
+atari_lib.AtariPreprocessing.terminal_on_life_loss = False
+
+Runner.num_iterations = 200
+Runner.training_steps = 250000  # agent steps
+Runner.evaluation_steps = 125000  # agent steps
+Runner.max_steps_per_episode = 27000  # agent steps
+
+OutOfGraphReplayBuffer.replay_capacity = 1000000
+OutOfGraphReplayBuffer.batch_size = 32
+
+Checkpointer.checkpoint_frequency = 10
+Checkpointer.checkpoint_duration = 1
+OutOfGraphReplayBuffer.checkpoint_duration = 1
+VectorizedOutOfGraphReplayBuffer.checkpoint_frequency = 10
+EnsembleRunner.save_checkpoint = True
+EnsembleRunner.clean_final_checkpoint = False
+CollectorDispatcher.collectors = ('console', 'json')
